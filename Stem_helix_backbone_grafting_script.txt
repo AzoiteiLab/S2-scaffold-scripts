@@ -1,0 +1,59 @@
+<ROSETTASCRIPTS>
+  <SCOREFXNS>
+    <ScoreFunction name="sfxn_ref2015" weights="ref2015" />
+  </SCOREFXNS>
+  <TASKOPERATIONS>
+    <ProteinInterfaceDesign name="pido_far" interface_distance_cutoff="15"/>
+    <ProteinInterfaceDesign name="pido_med" interface_distance_cutoff="12"/>
+    <ProteinInterfaceDesign name="pido_near" interface_distance_cutoff="8"/> 
+    <OperateOnCertainResidues name="hotspot_repack">
+      <ResiduePDBInfoHasLabel property="HOTSPOT"/>
+      <RestrictToRepackingRLT/>    
+    </OperateOnCertainResidues>   
+    <SelectBySASA name="core" mode="sc" state="bound" probe_radius="2.2" core_asa="0" surface_asa="30" core="1" boundary="0" surface="0"/>
+    <SelectBySASA name="core_and_boundary" mode="sc" state="bound" probe_radius="2.2" core_asa="0" surface_asa="30" core="1" boundary="1" surface="0"/>
+  </TASKOPERATIONS>
+  <FILTERS>
+    <ShapeComplementarity name="Sc" confidence="0" />
+    <Ddg name="ddg" scorefxn="sfxn_ref2015" confidence="0" />
+    <BuriedUnsatHbonds name="unsat" scorefxn="sfxn_ref2015" confidence="0"/>
+    <ScoreType name="farep" score_type="fa_rep" threshold="1000" confidence="0" />
+    <!--<Sasa name="sasa" threshold="700" hydrophobic="0" polar="0" jump="1" confidence="0" />
+    <ScoreType name="total_score" scorefxn="sfxn_ref2015" score_type="total_score" threshold="0" confidence="1"/>-->
+  </FILTERS>
+  <MOVERS>
+    <MinMover name="PreMinStructure" scorefxn="sfxn_ref2015" bb="true" chi="true" type="dfpmin" />
+    <MotifGraft name="motif_grafting" 
+      context_structure="CC40.8_Ab.pdb" motif_structure="CC40.8_epitope.pdb"
+      RMSD_tolerance="5.0" NC_points_RMSD_tolerance="0.75" 
+      clash_score_cutoff="5" clash_test_residue="ALA"
+      hotspots="2:5:6:8:9:10:12:13" combinatory_fragment_size_delta="1:1" max_fragment_replacement_size_delta="-4:4"
+      full_motif_bb_alignment="0"  allow_independent_alignment_per_fragment="0"
+      graft_only_hotspots_by_replacement="0" only_allow_if_N_point_match_aa_identity="0"
+      only_allow_if_C_point_match_aa_identity="0" revert_graft_to_native_sequence="0" allow_repeat_same_graft_output="0" />
+    <build_Ala_pose name="ala_pose" partner1="0" partner2="1" interface_cutoff_distance="8" task_operations="hotspot_repack"/>
+    <Prepack name="ppk" jump_number="0"/>
+    <PackRotamersMover name="design_core" task_operations="hotspot_repack,pido_far,core"/>
+    <PackRotamersMover name="design_boundary" task_operations="hotspot_repack,pido_med,core_and_boundary"/>
+    <PackRotamersMover name="design_interface" task_operations="hotspot_repack,pido_near"/>
+    <MinMover name="sc_min" bb="0" chi="1" jump="0" />
+    <Backrub name="bckrub"/>
+  </MOVERS>
+  <APPLY_TO_POSE>
+  </APPLY_TO_POSE>
+  <PROTOCOLS >
+    <Add mover_name="PreMinStructure" />
+    <Add mover_name="motif_grafting" />
+    <Add mover_name="ala_pose" />
+    <Add mover_name="ppk" />
+    <Add mover_name="design_core" />
+    <Add mover_name="design_boundary" />
+    <Add mover_name="design_interface" />
+    <Add mover_name="bckrub" />
+    <Add mover_name="sc_min" />
+    <Add filter_name="unsat" />
+    <Add filter_name="ddg" />
+    <Add filter_name="Sc" />
+    <Add filter_name="farep" />
+  </PROTOCOLS>
+</ROSETTASCRIPTS>
